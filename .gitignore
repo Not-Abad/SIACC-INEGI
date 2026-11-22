@@ -1,0 +1,58 @@
+# --- Entornos virtuales ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- Bytecode y cachés de Python (Plantilla GitHub) ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# --- Cachés de pruebas y linters ---
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Variables de entorno y credenciales ---
+.env
+.env.*
+!.env.example
+
+# --- IDEs y editores del equipo ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Archivos del Sistema Operativo ---
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# --- Archivos generados por Sistema_SIACC ---
+output/
+temp/
+*.log
+*.bak
+
