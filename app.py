@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, redirect, render_template, request
+from flask import Flask, jsonify, render_template, request
 from dao.inegi_dao import InegiDAO, ProcedimientoError
 
 app = Flask(__name__)
@@ -12,7 +12,15 @@ def datos_json():
 def validar_campos(datos, requeridos):
     faltantes = [campo for campo in requeridos if datos.get(campo) in (None, "")]
     if faltantes:
-        return jsonify({"mensaje": f"Faltan campos obligatorios: {', '.join(faltantes)}"}), 400
+        return (
+            jsonify(
+                {
+                    "estado_operacion": "ERROR",
+                    "mensaje": f"Faltan campos obligatorios: {', '.join(faltantes)}",
+                }
+            ),
+            400,
+        )
     return None
 
 
@@ -41,23 +49,24 @@ def error_general(e):
     return jsonify({"estado_operacion": "ERROR", "mensaje": "Error: " + str(e)}), 500
 
 
+# -----------------------------------------------------------------------------
+# VISTA PRINCIPAL
+# -----------------------------------------------------------------------------
 @app.get("/")
 def inicio():
     return render_template("index.html")
 
 
-@app.get("/procedimientos")
-def vista_procedimientos():
-    return render_template("procedimientos.html")
-
-
-@app.get("/procedimientos.html")
-def vista_procedimientos_alias():
-    return redirect("/procedimientos", code=302)
+# -----------------------------------------------------------------------------
+# CATÁLOGOS PARA SELECTS EN CASCADA
+# -----------------------------------------------------------------------------
+@app.get("/api/catalogo/<nombre>")
+def catalogo(nombre):
+    return jsonify(dao.obtener_catalogo(nombre, tuple(request.args.getlist("p"))))
 
 
 # -----------------------------------------------------------------------------
-# ENDPOINTS DEL FRONTEND PRINCIPAL (templates/index.html)
+# CONSULTAS GENERALES, RANGOS Y BÚSQUEDA
 # -----------------------------------------------------------------------------
 @app.get("/api/<recurso>")
 def listar(recurso):
@@ -71,6 +80,9 @@ def listar(recurso):
     )
 
 
+# -----------------------------------------------------------------------------
+# ENDPOINTS CRUD DE CATÁLOGOS Y ENTIDADES
+# -----------------------------------------------------------------------------
 @app.post("/api/tipos_vialidad")
 def alta_tipo_vialidad():
     d = datos_json()
@@ -144,27 +156,54 @@ def alta_direccion():
 @app.post("/api/establecimientos")
 def alta_establecimiento():
     d = datos_json()
-    error_val = validar_campos(
-        d,
-        [
-            "clee",
-            "nombre_establecimiento",
-            "razon_social",
-            "codigo_actividad",
-            "id_direccion",
-            "tipo_unidad_economica",
-        ],
-    )
+    base_requeridos = [
+        "clee",
+        "nombre_establecimiento",
+        "razon_social",
+        "codigo_actividad",
+        "tipo_unidad_economica",
+    ]
+    error_val = validar_campos(d, base_requeridos)
     if error_val:
         return error_val
+
+    if d.get("id_direccion") not in (None, ""):
+        return jsonify(
+            dao.alta_establecimiento(
+                d["clee"],
+                d["nombre_establecimiento"],
+                d["razon_social"],
+                d["codigo_actividad"],
+                d["id_direccion"],
+                d["tipo_unidad_economica"],
+            )
+        )
+
+    completos_requeridos = [
+        "id_localidad",
+        "id_asentamiento",
+        "codigo_postal",
+        "numero_exterior",
+        "id_tipo_vialidad",
+        "nombre_vialidad",
+    ]
+    error_comp = validar_campos(d, completos_requeridos)
+    if error_comp:
+        return error_comp
+
     return jsonify(
-        dao.alta_establecimiento(
+        dao.alta_establecimiento_completo(
             d["clee"],
             d["nombre_establecimiento"],
             d["razon_social"],
-            d["codigo_actividad"],
-            d["id_direccion"],
             d["tipo_unidad_economica"],
+            d["codigo_actividad"],
+            d["id_localidad"],
+            d["id_asentamiento"],
+            d["codigo_postal"],
+            d["numero_exterior"],
+            d["id_tipo_vialidad"],
+            d["nombre_vialidad"],
         )
     )
 
@@ -194,20 +233,6 @@ def baja_establecimiento():
     if error_val:
         return error_val
     return jsonify(dao.baja_establecimiento(d["id_establecimiento"]))
-
-
-# -----------------------------------------------------------------------------
-# ENDPOINTS ESTANDARIZADOS PARA LOS PROCEDIMIENTOS DE TODO EL EQUIPO
-# -----------------------------------------------------------------------------
-@app.get("/api/sp")
-def listar_procedimientos():
-    return jsonify(dao.catalogo_sp())
-
-
-@app.route("/api/sp/<clave>", methods=["GET", "POST", "PUT", "DELETE"])
-def ejecutar_procedimiento(clave):
-    payload = request.args.to_dict() if request.method == "GET" else datos_json()
-    return jsonify(dao.ejecutar_sp(clave, request.method, payload))
 
 
 if __name__ == "__main__":

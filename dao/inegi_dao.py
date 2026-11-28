@@ -68,6 +68,18 @@ class InegiDAO:
             ORDER BY codigo_actividad
             LIMIT 200
         """,
+        "bitacora_actividades": """
+            SELECT
+                id_bitacora,
+                codigo_act,
+                nombre_act,
+                fecha_operacion,
+                usuario_bd,
+                accion
+            FROM bitacora_actividades
+            ORDER BY id_bitacora DESC
+            LIMIT 50
+        """,
         "establecimientos": """
             SELECT *
             FROM vw_establecimientos_completo
@@ -91,50 +103,41 @@ class InegiDAO:
         """,
     }
 
-    # =========================================================================
-    # REGISTRO ESTANDARIZADO DE PROCEDIMIENTOS ALMACENADOS
-    # Cada entrada queda expuesta automáticamente en: /api/sp/<clave>
-    # =========================================================================
-    PROCEDIMIENTOS = {
-        # --- Procedimientos de Jesús Abad (database/procedimientos/01_abad_procedimientos.sql) ---
-        "informacion_establecimiento": {
-            "sp": "sp_informacion_establecimiento",
-            "metodo": "GET",
-            "params": ["id_establecimiento"],
-            "opcionales": [],
-            "descripcion": "Consulta ficha general y ubicación completa de un establecimiento por ID.",
-        },
-        "insertar_detalle_vialidad": {
-            "sp": "sp_insetar_detalle_vialidad",
-            "metodo": "POST",
-            "params": ["id_direccion", "id_tipo_vialidad", "nombre_vialidad"],
-            "opcionales": [],
-            "descripcion": "Inserta un detalle de vialidad validando dirección y tipo de vialidad.",
-        },
-        "insertar_localidad": {
-            "sp": "sp_insertar_localidad",
-            "metodo": "POST",
-            "params": ["nombre_entidad", "nombre_municipio", "nombre_localidad", "cve_loc"],
-            "opcionales": [],
-            "descripcion": "Inserta una localidad validando entidad, municipio y clave cve_loc.",
-        },
-
-        # --- 15 espacios reservados para los compañeros del equipo ---
-        "sp_companero_01": {"sp": "sp_pendiente_01", "metodo": "GET", "params": [], "opcionales": [], "descripcion": "Disponible"},
-        "sp_companero_02": {"sp": "sp_pendiente_02", "metodo": "GET", "params": [], "opcionales": [], "descripcion": "Disponible"},
-        "sp_companero_03": {"sp": "sp_pendiente_03", "metodo": "GET", "params": [], "opcionales": [], "descripcion": "Disponible"},
-        "sp_companero_04": {"sp": "sp_pendiente_04", "metodo": "GET", "params": [], "opcionales": [], "descripcion": "Disponible"},
-        "sp_companero_05": {"sp": "sp_pendiente_05", "metodo": "GET", "params": [], "opcionales": [], "descripcion": "Disponible"},
-        "sp_companero_06": {"sp": "sp_pendiente_06", "metodo": "POST", "params": [], "opcionales": [], "descripcion": "Disponible"},
-        "sp_companero_07": {"sp": "sp_pendiente_07", "metodo": "POST", "params": [], "opcionales": [], "descripcion": "Disponible"},
-        "sp_companero_08": {"sp": "sp_pendiente_08", "metodo": "POST", "params": [], "opcionales": [], "descripcion": "Disponible"},
-        "sp_companero_09": {"sp": "sp_pendiente_09", "metodo": "POST", "params": [], "opcionales": [], "descripcion": "Disponible"},
-        "sp_companero_10": {"sp": "sp_pendiente_10", "metodo": "POST", "params": [], "opcionales": [], "descripcion": "Disponible"},
-        "sp_companero_11": {"sp": "sp_pendiente_11", "metodo": "PUT", "params": [], "opcionales": [], "descripcion": "Disponible"},
-        "sp_companero_12": {"sp": "sp_pendiente_12", "metodo": "PUT", "params": [], "opcionales": [], "descripcion": "Disponible"},
-        "sp_companero_13": {"sp": "sp_pendiente_13", "metodo": "PUT", "params": [], "opcionales": [], "descripcion": "Disponible"},
-        "sp_companero_14": {"sp": "sp_pendiente_14", "metodo": "DELETE", "params": [], "opcionales": [], "descripcion": "Disponible"},
-        "sp_companero_15": {"sp": "sp_pendiente_15", "metodo": "DELETE", "params": [], "opcionales": [], "descripcion": "Disponible"},
+    CATALOGOS = {
+        "estados": """
+            SELECT cve_ent AS valor, nombre_entidad AS texto
+            FROM entidad
+            ORDER BY nombre_entidad
+        """,
+        "municipios": """
+            SELECT cve_mun AS valor, nombre_municipio AS texto
+            FROM municipio
+            WHERE cve_ent = %s
+            ORDER BY nombre_municipio
+        """,
+        "localidades": """
+            SELECT id_localidad AS valor, nombre_localidad AS texto
+            FROM localidad
+            WHERE cve_ent = %s AND cve_mun = %s
+            ORDER BY nombre_localidad
+        """,
+        "actividades": """
+            SELECT
+                codigo_actividad AS valor,
+                CONCAT(codigo_actividad, ' - ', nombre_actividad) AS texto
+            FROM actividad
+            ORDER BY codigo_actividad
+        """,
+        "asentamientos": """
+            SELECT id_asentamiento AS valor, tipo_asentamiento AS texto
+            FROM asentamiento
+            ORDER BY tipo_asentamiento
+        """,
+        "tipos_vialidad": """
+            SELECT id_tipo_vialidad AS valor, nombre_tipo_vialidad AS texto
+            FROM tipo_vialidad
+            ORDER BY nombre_tipo_vialidad
+        """,
     }
 
     def __init__(self, config=None):
@@ -196,6 +199,12 @@ class InegiDAO:
                 "datos": datos_extra,
             }
 
+        if len(filas) == 1 and "resultado" in primera and len(primera) == 1:
+            return {
+                "estado_operacion": "EXITO",
+                "mensaje": str(primera["resultado"]),
+            }
+
         return filas
 
     def llamar_sp(self, nombre_sp, args=()):
@@ -215,49 +224,15 @@ class InegiDAO:
             con.close()
 
     # -------------------------------------------------------------------------
-    # DESPACHADOR ESTANDARIZADO PARA /api/sp/<clave>
+    # CATÁLOGOS PARA SELECTS EN CASCADA (/api/catalogo/<nombre>)
     # -------------------------------------------------------------------------
-    def catalogo_sp(self):
-        return [
-            {
-                "clave": clave,
-                "endpoint": f"/api/sp/{clave}",
-                "sp": cfg["sp"],
-                "metodo": cfg["metodo"],
-                "params": cfg["params"],
-                "opcionales": cfg.get("opcionales", []),
-                "descripcion": cfg.get("descripcion", ""),
-            }
-            for clave, cfg in self.PROCEDIMIENTOS.items()
-        ]
-
-    def ejecutar_sp(self, clave, metodo_http, payload):
-        if clave not in self.PROCEDIMIENTOS:
-            raise KeyError(f"El procedimiento '{clave}' no está registrado en InegiDAO.")
-
-        cfg = self.PROCEDIMIENTOS[clave]
-        metodo_esperado = cfg["metodo"].upper()
-        if metodo_http.upper() != metodo_esperado:
-            raise PermissionError(
-                f"Método {metodo_http} no permitido para '{clave}'. Usa {metodo_esperado}."
-            )
-
-        opcionales = set(cfg.get("opcionales", []))
-        faltantes = [
-            p for p in cfg["params"]
-            if p not in opcionales and payload.get(p) in (None, "")
-        ]
-        if faltantes:
-            raise ValueError(f"Faltan parámetros obligatorios: {', '.join(faltantes)}")
-
-        args = [
-            None if payload.get(p) in (None, "") else payload.get(p)
-            for p in cfg["params"]
-        ]
-        return self.llamar_sp(cfg["sp"], args)
+    def obtener_catalogo(self, nombre, params=()):
+        if nombre not in self.CATALOGOS:
+            raise KeyError(f"Catálogo '{nombre}' no encontrado")
+        return self.ejecutar_sql(self.CATALOGOS[nombre], params)
 
     # -------------------------------------------------------------------------
-    # CONSULTAS Y OPERACIONES BASE DEL FRONTEND INYECTADO
+    # CONSULTAS Y OPERACIONES BASE DEL FRONTEND
     # -------------------------------------------------------------------------
     def listar_recurso(self, recurso, q="", desde="", hasta=""):
         if recurso in self.RANGOS:
@@ -279,19 +254,9 @@ class InegiDAO:
                 (texto, texto),
             )
 
-        if recurso == "actividades" and q.strip():
-            texto = f"%{q.strip()}%"
-            return self.ejecutar_sql(
-                """
-                SELECT codigo_actividad, nombre_actividad
-                FROM actividad
-                WHERE codigo_actividad LIKE %s
-                   OR nombre_actividad LIKE %s
-                ORDER BY codigo_actividad
-                LIMIT 200
-                """,
-                (texto, texto),
-            )
+        if recurso == "actividades":
+            res = self.llamar_sp("sp_actividad_consultar", [q.strip()])
+            return res if isinstance(res, list) else []
 
         if recurso not in self.CONSULTAS:
             raise KeyError(f"Recurso '{recurso}' no encontrado")
@@ -396,6 +361,37 @@ class InegiDAO:
             ],
         )
 
+    def alta_establecimiento_completo(
+        self,
+        clee,
+        nombre_establecimiento,
+        razon_social,
+        tipo_unidad_economica,
+        codigo_actividad,
+        id_localidad,
+        id_asentamiento,
+        codigo_postal,
+        numero_exterior,
+        id_tipo_vialidad,
+        nombre_vialidad,
+    ):
+        return self.llamar_sp(
+            "sp_establecimiento_completo_alta",
+            [
+                clee,
+                nombre_establecimiento,
+                razon_social,
+                tipo_unidad_economica,
+                codigo_actividad,
+                id_localidad,
+                id_asentamiento,
+                codigo_postal,
+                numero_exterior,
+                id_tipo_vialidad,
+                nombre_vialidad,
+            ],
+        )
+
     def actualizar_establecimiento(
         self, id_establecimiento, nombre_establecimiento, razon_social, telefono
     ):
@@ -406,3 +402,16 @@ class InegiDAO:
 
     def baja_establecimiento(self, id_establecimiento):
         return self.llamar_sp("sp_establecimiento_baja", [id_establecimiento])
+
+    def informacion_establecimiento(self, id_establecimiento):
+        return self.llamar_sp("sp_informacion_establecimiento", [id_establecimiento])
+
+    def insertar_detalle_vialidad(self, id_direccion, id_tipo_vialidad, nombre_vialidad):
+        return self.llamar_sp(
+            "sp_insetar_detalle_vialidad", [id_direccion, id_tipo_vialidad, nombre_vialidad]
+        )
+
+    def insertar_localidad(self, nombre_entidad, nombre_municipio, nombre_localidad, cve_loc):
+        return self.llamar_sp(
+            "sp_insertar_localidad", [nombre_entidad, nombre_municipio, nombre_localidad, cve_loc]
+        )
