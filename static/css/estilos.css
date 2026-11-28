@@ -1,0 +1,149 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #f4f6f8;
+    color: #222;
+}
+
+header {
+    background: #F65737;
+    color: #fff;
+    padding: 12px 24px;
+}
+
+header h1 {
+    margin: 0;
+}
+
+header p {
+    margin: 2px 0 0;
+    font-size: 14px;
+}
+
+nav {
+    background: #F87C63;
+    padding: 8px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+
+nav button,
+nav a.nav-enlace {
+    display: inline-block;
+    background: transparent;
+    border: none;
+    color: #fff;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.2;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease;
+}
+
+nav button:hover,
+nav a.nav-enlace:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+}
+
+nav button.activo,
+nav a.nav-enlace.activo {
+    background: #fff;
+    color: #F65737;
+    font-weight: bold;
+}
+
+main {
+    padding: 16px 24px;
+}
+
+form {
+    background: #fff;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 10px;
+}
+
+input {
+    padding: 8px 12px;
+    margin: 2px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input:focus {
+    border-color: #F65737;
+    box-shadow: 0 0 0 3px rgba(246, 87, 55, 0.2);
+}
+
+form button {
+    padding: 8px 16px;
+    background: #F65737;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+form button:hover {
+    background: #F87C63;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(246, 87, 55, 0.35);
+}
+
+form button:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    background: #fff;
+    margin-bottom: 16px;
+    font-size: 13px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 6px;
+    text-align: left;
+}
+
+th {
+    background: #fde8e3;
+}
+
+.caja-tabla {
+    max-height: 350px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.caja-tabla table {
+    margin-bottom: 0;
+}
+
+.caja-tabla th {
+    position: sticky;
+    top: 0;
+}
+
+td {
+    transition: background 0.2s ease;
+}
+
+tr:hover td {
+    background: #fde8e3;
+}

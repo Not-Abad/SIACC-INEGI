@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SIACC</title>
+  <link rel="stylesheet" href="/static/css/estilos.css">
+</head>
+<body>
+  <header>
+    <h1>SIACC</h1>
+    <p>Sistema Integral de Automatización y Consulta Comercial</p>
+  </header>
+
+  <nav>
+    <button type="button" data-modulo="m1" class="activo">1. Geografía</button>
+    <button type="button" data-modulo="m2">2. Infraestructura</button>
+    <button type="button" data-modulo="m3">3. Actividades</button>
+    <button type="button" data-modulo="m4">4. Establecimientos</button>
+    <a href="/procedimientos" class="nav-enlace">5. Procedimientos Almacenados</a>
+  </nav>
+
+  <main>
+    <section id="m1">
+      <h2>Geografía y Territorialidad</h2>
+      <form class="filtro" data-recurso="municipios">
+        <b>Municipios por clave:</b>
+        <input name="desde" placeholder="Desde (000)">
+        <input name="hasta" placeholder="Hasta (999)">
+        <button type="submit">Buscar</button>
+      </form>
+      <table data-recurso="municipios"></table>
+
+      <form class="filtro" data-recurso="localidades">
+        <b>Localidades por clave:</b>
+        <input name="desde" placeholder="Desde (0001)">
+        <input name="hasta" placeholder="Hasta (9999)">
+        <button type="submit">Buscar</button>
+      </form>
+      <table data-recurso="localidades"></table>
+
+      <h3>Estados</h3>
+      <table data-recurso="entidades"></table>
+    </section>
+
+    <section id="m2" hidden>
+      <h2>Infraestructura Urbana</h2>
+      <form class="accion" data-url="/api/tipos_vialidad" data-metodo="POST">
+        <b>Nuevo tipo de vialidad:</b>
+        <input name="nombre_tipo_vialidad" required>
+        <button type="submit">Guardar</button>
+      </form>
+      <table data-recurso="tipos_vialidad"></table>
+
+      <form class="accion" data-url="/api/asentamientos" data-metodo="POST">
+        <b>Nuevo asentamiento:</b>
+        <input name="tipo_asentamiento" required>
+        <button type="submit">Guardar</button>
+      </form>
+      <table data-recurso="asentamientos"></table>
+
+      <h3>Detalle de vialidades</h3>
+      <table data-recurso="detalles_vialidad"></table>
+    </section>
+
+    <section id="m3" hidden>
+      <h2>Clasificación Económica</h2>
+      <form class="accion" data-url="/api/actividades" data-metodo="POST">
+        <b>Alta:</b>
+        <input name="codigo_actividad" placeholder="Código" required>
+        <input name="nombre_actividad" placeholder="Nombre" required>
+        <button type="submit">Guardar</button>
+      </form>
+
+      <form class="accion" data-url="/api/actividades" data-metodo="PUT">
+        <b>Actualizar:</b>
+        <input name="codigo_actividad" placeholder="Código" required>
+        <input name="nombre_actividad" placeholder="Nuevo nombre" required>
+        <button type="submit">Actualizar</button>
+      </form>
+      <table data-recurso="actividades"></table>
+    </section>
+
+    <section id="m4" hidden>
+      <h2>Establecimientos y Direcciones</h2>
+      <form class="accion" data-url="/api/direcciones" data-metodo="POST">
+        <b>Nueva dirección:</b>
+        <input name="id_localidad" placeholder="ID localidad" required>
+        <input name="id_asentamiento" placeholder="ID asentamiento" required>
+        <input name="codigo_postal" placeholder="C.P.">
+        <input name="numero_exterior" placeholder="Núm. ext.">
+        <button type="submit">Guardar</button>
+      </form>
+
+      <form class="accion" data-url="/api/establecimientos" data-metodo="POST">
+        <b>Alta:</b>
+        <input name="clee" placeholder="CLEE" required>
+        <input name="nombre_establecimiento" placeholder="Nombre" required>
+        <input name="razon_social" placeholder="Razón social">
+        <input name="codigo_actividad" placeholder="Cód. actividad" required>
+        <input name="id_direccion" placeholder="ID dirección" required>
+        <input name="tipo_unidad_economica" placeholder="Tipo">
+        <button type="submit">Guardar</button>
+      </form>
+
+      <form class="accion" data-url="/api/establecimientos" data-metodo="PUT">
+        <b>Actualizar:</b>
+        <input name="id_establecimiento" placeholder="ID" required>
+        <input name="nombre_establecimiento" placeholder="Nombre" required>
+        <input name="razon_social" placeholder="Razón social">
+        <input name="telefono" placeholder="Teléfono">
+        <button type="submit">Actualizar</button>
+      </form>
+
+      <form class="accion" data-url="/api/establecimientos" data-metodo="DELETE">
+        <b>Baja:</b>
+        <input name="id_establecimiento" placeholder="ID" required>
+        <button type="submit">Dar de baja</button>
+      </form>
+
+      <form class="busqueda" data-recurso="establecimientos">
+        <b>Buscar establecimiento:</b>
+        <input name="q" placeholder="Nombre o CLEE">
+        <button type="submit">Buscar</button>
+      </form>
+      <table data-recurso="establecimientos"></table>
+    </section>
+  </main>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

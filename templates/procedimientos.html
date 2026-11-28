@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIACC | Procedimientos Almacenados</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --surface: #ffffff;
+      --border: #ddd;
+      --text: #222222;
+      --muted: #64748b;
+      --primary: #F65737;
+      --primary-hover: #F87C63;
+      --primary-soft: #fde8e3;
+      --get: #0284c7;
+      --post: #16a34a;
+      --put: #d97706;
+      --delete: #dc2626;
+      --ok-bg: #ecfdf5;
+      --ok-border: #10b981;
+      --ok-text: #065f46;
+      --warn-bg: #fffbeb;
+      --warn-border: #f59e0b;
+      --warn-text: #92400e;
+      --err-bg: #fef2f2;
+      --err-border: #ef4444;
+      --err-text: #991b1b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 12px 24px;
+    }
+
+    header h1 {
+      margin: 0;
+    }
+
+    header p {
+      margin: 2px 0 0;
+      font-size: 14px;
+    }
+
+    nav {
+      background: var(--primary-hover);
+      padding: 8px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px;
+    }
+
+    nav a.nav-enlace {
+      display: inline-block;
+      background: transparent;
+      color: #fff;
+      padding: 8px 14px;
+      font-size: 15px;
+      line-height: 1.2;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease;
+    }
+
+    nav a.nav-enlace:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+    }
+
+    nav a.nav-enlace.activo {
+      background: #fff;
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    .ruta-tag {
+      font-size: 12px;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.16);
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    .layout {
+      max-width: 1360px;
+      margin: 16px auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+        padding: 0 14px;
+      }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .sidebar-header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .sidebar-header input[type="search"] {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .sidebar-header input[type="search"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(246, 87, 55, 0.2);
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+
+    .sp-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 68vh;
+      overflow-y: auto;
+    }
+
+    .sp-item {
+      text-align: left;
+      width: 100%;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, transform 0.2s;
+    }
+
+    .sp-item:hover {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      transform: translateY(-1px);
+    }
+
+    .sp-item.active {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+    }
+
+    .sp-item.pendiente {
+      opacity: 0.65;
+    }
+
+    .sp-item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .sp-name {
+      font-weight: bold;
+      font-size: 14px;
+      word-break: break-word;
+    }
+
+    .sp-sub {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .badge {
+      font-size: 11px;
+      font-weight: bold;
+      padding: 3px 7px;
+      border-radius: 6px;
+      color: #fff;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .badge-GET { background: var(--get); }
+    .badge-POST { background: var(--post); }
+    .badge-PUT { background: var(--put); }
+    .badge-DELETE { background: var(--delete); }
+
+    .detail-header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+
+    .detail-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .detail-title h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .endpoint-pill {
+      display: inline-block;
+      margin-top: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12.5px;
+      background: var(--primary-soft);
+      padding: 4px 10px;
+      border-radius: 6px;
+      color: #7c2d12;
+    }
+
+    .desc {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field label {
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .field label small {
+      font-weight: normal;
+      color: var(--muted);
+    }
+
+    .field input {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .field input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(246, 87, 55, 0.2);
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button.btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    button.btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(246, 87, 55, 0.35);
+    }
+
+    button.btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    button.btn-secondary {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid #ccc;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    button.btn-secondary:hover {
+      background: #f4f6f8;
+    }
+
+    .result-area {
+      margin-top: 16px;
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+    }
+
+    .alert {
+      padding: 10px 14px;
+      border-radius: 8px;
+      border-left: 4px solid;
+      margin-bottom: 14px;
+      font-size: 14px;
+    }
+
+    .alert-EXITO {
+      background: var(--ok-bg);
+      border-color: var(--ok-border);
+      color: var(--ok-text);
+    }
+
+    .alert-SIN_RESULTADOS {
+      background: var(--warn-bg);
+      border-color: var(--warn-border);
+      color: var(--warn-text);
+    }
+
+    .alert-ERROR {
+      background: var(--err-bg);
+      border-color: var(--err-border);
+      color: var(--err-text);
+    }
+
+    .ficha-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 10px;
+    }
+
+    .ficha-item {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+
+    .ficha-key {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .ficha-val {
+      font-size: 14px;
+      font-weight: bold;
+      margin-top: 2px;
+      word-break: break-word;
+    }
+
+    .caja-tabla {
+      max-height: 360px;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 13px;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 6px 8px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      background: var(--primary-soft);
+      position: sticky;
+      top: 0;
+    }
+
+    tr:hover td {
+      background: var(--primary-soft);
+    }
+
+    details.raw-json {
+      margin-top: 12px;
+      font-size: 12.5px;
+    }
+
+    details.raw-json pre {
+      background: #1e293b;
+      color: #f8fafc;
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      max-height: 260px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>SIACC</h1>
+    <p>Sistema Integral de Automatización y Consulta Comercial · Procedimientos Almacenados</p>
+  </header>
+
+  <nav>
+    <div class="nav-links">
+      <a href="/" class="nav-enlace">← Volver a Catálogos y CRUD</a>
+      <a href="/procedimientos" class="nav-enlace activo">5. Procedimientos Almacenados</a>
+    </div>
+    <span class="ruta-tag">Carpeta: database/procedimientos/</span>
+  </nav>
+
+  <main class="layout">
+    <aside class="card">
+      <div class="sidebar-header">
+        <input
+          type="search"
+          id="buscadorSp"
+          placeholder="Buscar procedimiento..."
+        />
+        <div class="toggle-row">
+          <span id="contadorSp">Cargando...</span>
+          <label>
+            <input type="checkbox" id="mostrarPendientes" />
+            Ver espacios libres
+          </label>
+        </div>
+      </div>
+      <div class="sp-list" id="listaSp"></div>
+    </aside>
+
+    <section class="card" id="panelDetalle">
+      <p style="color: var(--muted); margin: 0;">Selecciona un procedimiento almacenado de la lista.</p>
+    </section>
+  </main>
+
+  <script>
+    const PLACEHOLDERS = {
+      id_establecimiento: "Ej. 9",
+      id_direccion: "Ej. 834",
+      id_tipo_vialidad: "Ej. 4",
+      nombre_vialidad: "Ej. AVENIDA UNIVERSIDAD",
+      nombre_entidad: "Ej. Veracruz de Ignacio de la Llave",
+      nombre_municipio: "Ej. Xalapa",
+      nombre_localidad: "Ej. Nueva Localidad",
+      cve_loc: "4 dígitos (Ej. 0999)"
+    };
+
+    let catalogo = [];
+    let seleccionado = null;
+
+    function escapeHtml(valor) {
+      if (valor === null || valor === undefined) return "—";
+      return String(valor)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function esPendiente(item) {
+      return item.sp.startsWith("sp_pendiente_");
+    }
+
+    async function cargarCatalogo() {
+      const lista = document.getElementById("listaSp");
+      try {
+        const res = await fetch("/api/sp");
+        catalogo = await res.json();
+        renderLista();
+
+        const primeroActivo = catalogo.find((item) => !esPendiente(item)) || catalogo[0];
+        if (primeroActivo) {
+          seleccionarSp(primeroActivo.clave);
+        }
+      } catch (err) {
+        lista.innerHTML = `<div class="alert alert-ERROR">No se pudo cargar <code>/api/sp</code>: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function renderLista() {
+      const filtro = document.getElementById("buscadorSp").value.trim().toLowerCase();
+      const verPendientes = document.getElementById("mostrarPendientes").checked;
+      const lista = document.getElementById("listaSp");
+
+      const filtrados = catalogo.filter((item) => {
+        if (!verPendientes && esPendiente(item)) return false;
+        if (!filtro) return true;
+        return (
+          item.clave.toLowerCase().includes(filtro) ||
+          item.sp.toLowerCase().includes(filtro) ||
+          (item.descripcion || "").toLowerCase().includes(filtro)
+        );
+      });
+
+      const activosTotal = catalogo.filter((i) => !esPendiente(i)).length;
+      document.getElementById("contadorSp").textContent = `${activosTotal} activos / ${catalogo.length} total`;
+
+      if (filtrados.length === 0) {
+        lista.innerHTML = `<p style="color: var(--muted); font-size: 13px;">Sin procedimientos que coincidan.</p>`;
+        return;
+      }
+
+      lista.innerHTML = filtrados
+        .map((item) => {
+          const activo = seleccionado && seleccionado.clave === item.clave ? "active" : "";
+          const pend = esPendiente(item) ? "pendiente" : "";
+          return `
+            <button type="button" class="sp-item ${activo} ${pend}" data-clave="${escapeHtml(item.clave)}">
+              <div class="sp-item-top">
+                <span class="sp-name">${escapeHtml(item.clave)}</span>
+                <span class="badge badge-${escapeHtml(item.metodo)}">${escapeHtml(item.metodo)}</span>
+              </div>
+              <div class="sp-sub">${escapeHtml(item.sp)}</div>
+            </button>
+          `;
+        })
+        .join("");
+
+      lista.querySelectorAll(".sp-item").forEach((btn) => {
+        btn.addEventListener("click", () => seleccionarSp(btn.dataset.clave));
+      });
+    }
+
+    function seleccionarSp(clave) {
+      seleccionado = catalogo.find((item) => item.clave === clave);
+      if (!seleccionado) return;
+      renderLista();
+
+      const panel = document.getElementById("panelDetalle");
+      const opcionales = new Set(seleccionado.opcionales || []);
+
+      const camposHtml =
+        seleccionado.params.length === 0
+          ? `<p style="color: var(--muted); font-size: 13.5px;">Este procedimiento no recibe parámetros de entrada.</p>`
+          : `<div class="form-grid">
+              ${seleccionado.params
+                .map((param) => {
+                  const esOpc = opcionales.has(param);
+                  const placeholder = PLACEHOLDERS[param] || `Ingresa ${param}`;
+                  return `
+                    <div class="field">
+                      <label for="param_${escapeHtml(param)}">
+                        ${escapeHtml(param)}
+                        <small>${esOpc ? "(opcional)" : "*"}</small>
+                      </label>
+                      <input
+                        id="param_${escapeHtml(param)}"
+                        name="${escapeHtml(param)}"
+                        type="text"
+                        placeholder="${escapeHtml(placeholder)}"
+                        ${esOpc ? "" : "required"}
+                      />
+                    </div>
+                  `;
+                })
+                .join("")}
+            </div>`;
+
+      panel.innerHTML = `
+        <div class="detail-header">
+          <div class="detail-title">
+            <span class="badge badge-${escapeHtml(seleccionado.metodo)}">${escapeHtml(seleccionado.metodo)}</span>
+            <h2>${escapeHtml(seleccionado.sp)}</h2>
+          </div>
+          <div class="endpoint-pill">${escapeHtml(seleccionado.metodo)} ${escapeHtml(seleccionado.endpoint)}</div>
+          <p class="desc">${escapeHtml(seleccionado.descripcion || "Sin descripción.")}</p>
+        </div>
+
+        <form id="formSp">
+          ${camposHtml}
+          <div class="actions">
+            <button type="submit" class="btn-primary" id="btnEjecutar">Ejecutar procedimiento</button>
+            <button type="button" class="btn-secondary" id="btnLimpiar">Limpiar</button>
+          </div>
+        </form>
+
+        <div class="result-area" id="resultadoSp" hidden></div>
+      `;
+
+      document.getElementById("formSp").addEventListener("submit", ejecutarFormulario);
+      document.getElementById("btnLimpiar").addEventListener("click", () => {
+        document.getElementById("formSp").reset();
+        const resArea = document.getElementById("resultadoSp");
+        resArea.hidden = true;
+        resArea.innerHTML = "";
+      });
+    }
+
+    async function ejecutarFormulario(event) {
+      event.preventDefault();
+      if (!seleccionado) return;
+
+      const btn = document.getElementById("btnEjecutar");
+      const resArea = document.getElementById("resultadoSp");
+      btn.disabled = true;
+      btn.textContent = "Ejecutando...";
+
+      const payload = {};
+      seleccionado.params.forEach((param) => {
+        const input = document.getElementById(`param_${param}`);
+        if (input) payload[param] = input.value.trim();
+      });
+
+      try {
+        let url = seleccionado.endpoint;
+        const opciones = { method: seleccionado.metodo, headers: {} };
+
+        if (seleccionado.metodo === "GET") {
+          const qs = new URLSearchParams();
+          Object.entries(payload).forEach(([k, v]) => {
+            if (v !== "") qs.append(k, v);
+          });
+          if (qs.toString()) url += `?${qs.toString()}`;
+        } else {
+          opciones.headers["Content-Type"] = "application/json";
+          opciones.body = JSON.stringify(payload);
+        }
+
+        const response = await fetch(url, opciones);
+        const data = await response.json();
+        renderResultado(resArea, response.status, data);
+      } catch (err) {
+        renderResultado(resArea, 500, {
+          estado_operacion: "ERROR",
+          mensaje: "Error de red al conectar con Flask: " + err.message
+        });
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Ejecutar procedimiento";
+      }
+    }
+
+    function renderResultado(contenedor, statusHttp, data) {
+      contenedor.hidden = false;
+      let html = "";
+
+      if (Array.isArray(data)) {
+        if (data.length === 0) {
+          html += `<div class="alert alert-SIN_RESULTADOS">La consulta no devolvió registros.</div>`;
+        } else if (data.length === 1) {
+          html += `<div class="alert alert-EXITO">Consulta ejecutada correctamente (1 registro encontrado).</div>`;
+          html += `<div class="ficha-grid">
+            ${Object.entries(data[0])
+              .map(
+                ([k, v]) => `
+                <div class="ficha-item">
+                  <div class="ficha-key">${escapeHtml(k)}</div>
+                  <div class="ficha-val">${escapeHtml(v)}</div>
+                </div>
+              `
+              )
+              .join("")}
+          </div>`;
+        } else {
+          const columnas = Object.keys(data[0]);
+          html += `<div class="alert alert-EXITO">Consulta ejecutada correctamente (${data.length} registros).</div>`;
+          html += `<div class="caja-tabla"><table><thead><tr>
+            ${columnas.map((c) => `<th>${escapeHtml(c)}</th>`).join("")}
+          </tr></thead><tbody>
+            ${data
+              .map(
+                (fila) =>
+                  `<tr>${columnas.map((c) => `<td>${escapeHtml(fila[c])}</td>`).join("")}</tr>`
+              )
+              .join("")}
+          </tbody></table></div>`;
+        }
+      } else if (data && typeof data === "object") {
+        const estado = (data.estado_operacion || (statusHttp >= 400 ? "ERROR" : "EXITO")).toUpperCase();
+        const claseAlerta = ["EXITO", "SIN_RESULTADOS", "ERROR"].includes(estado) ? estado : "ERROR";
+        const mensaje = data.mensaje || "Operación finalizada.";
+
+        html += `<div class="alert alert-${claseAlerta}">
+          <strong>${escapeHtml(estado)} (HTTP ${statusHttp}):</strong> ${escapeHtml(mensaje)}
+        </div>`;
+
+        const extras = data.datos && Object.keys(data.datos).length > 0 ? data.datos : null;
+        if (extras) {
+          html += `<div class="ficha-grid">
+            ${Object.entries(extras)
+              .map(
+                ([k, v]) => `
+                <div class="ficha-item">
+                  <div class="ficha-key">${escapeHtml(k)}</div>
+                  <div class="ficha-val">${escapeHtml(v)}</div>
+                </div>
+              `
+              )
+              .join("")}
+          </div>`;
+        }
+      }
+
+      html += `
+        <details class="raw-json">
+          <summary>Ver respuesta JSON cruda</summary>
+          <pre>${escapeHtml(JSON.stringify(data, null, 2))}</pre>
+        </details>
+      `;
+
+      contenedor.innerHTML = html;
+    }
+
+    document.getElementById("buscadorSp").addEventListener("input", renderLista);
+    document.getElementById("mostrarPendientes").addEventListener("change", renderLista);
+    cargarCatalogo();
+  </script>
+</body>
+</html>
