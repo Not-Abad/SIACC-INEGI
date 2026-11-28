@@ -17,7 +17,6 @@
     <button type="button" data-modulo="m2">2. Infraestructura</button>
     <button type="button" data-modulo="m3">3. Actividades</button>
     <button type="button" data-modulo="m4">4. Establecimientos</button>
-    <a href="/procedimientos" class="nav-enlace">5. Procedimientos Almacenados</a>
   </nav>
 
   <main>
@@ -66,19 +65,28 @@
     <section id="m3" hidden>
       <h2>Clasificación Económica</h2>
       <form class="accion" data-url="/api/actividades" data-metodo="POST">
-        <b>Alta:</b>
-        <input name="codigo_actividad" placeholder="Código" required>
-        <input name="nombre_actividad" placeholder="Nombre" required>
+        <b>Alta de actividad:</b>
+        <input name="codigo_actividad" placeholder="Código SCIAN (ej. 461110)" maxlength="6" required>
+        <input name="nombre_actividad" placeholder="Nombre del giro económico" required>
         <button type="submit">Guardar</button>
       </form>
 
       <form class="accion" data-url="/api/actividades" data-metodo="PUT">
-        <b>Actualizar:</b>
-        <input name="codigo_actividad" placeholder="Código" required>
+        <b>Actualizar actividad:</b>
+        <input name="codigo_actividad" placeholder="Código existente" maxlength="6" required>
         <input name="nombre_actividad" placeholder="Nuevo nombre" required>
         <button type="submit">Actualizar</button>
       </form>
+
+      <form class="busqueda" data-recurso="actividades">
+        <b>Buscar actividad:</b>
+        <input name="q" placeholder="Código o nombre de giro">
+        <button type="submit">Buscar</button>
+      </form>
       <table data-recurso="actividades"></table>
+
+      <h3>Bitácora de Auditoría (Trigger)</h3>
+      <table data-recurso="bitacora_actividades"></table>
     </section>
 
     <section id="m4" hidden>
